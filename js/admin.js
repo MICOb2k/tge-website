@@ -60,12 +60,16 @@ export async function publishTournament(data) {
 }
 
 export async function listLiveTournaments(gameFilter = null) {
-  let q = query(collection(db, "tournaments"), where("status", "==", "live"), orderBy("createdAt", "desc"));
+  // No orderBy here on purpose — combining where() + orderBy() on a
+  // different field requires a Firestore composite index to be created
+  // manually in the console. Sorting client-side avoids that entirely.
+  const q = query(collection(db, "tournaments"), where("status", "==", "live"));
   const snap = await getDocs(q);
   const results = [];
   snap.forEach(d => {
     if (!gameFilter || d.data().game === gameFilter) results.push({ id: d.id, ...d.data() });
   });
+  results.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
   return results;
 }
 
@@ -162,4 +166,4 @@ export async function listAdmins() {
   const admins = [];
   snap.forEach(d => admins.push(d.id));
   return admins;
-    }
+  }
