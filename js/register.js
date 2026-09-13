@@ -43,11 +43,12 @@ function compressImage(file, maxDim = 500, quality = 0.72) {
    Load live tournaments for a given game into a <select>.
 --------------------------------------------------------- */
 export async function loadTournamentOptions(gameId, selectEl, listEl) {
+  // No orderBy on purpose — where()+orderBy() on a different field needs a
+  // Firestore composite index. Sorting client-side avoids that entirely.
   const q = query(
     collection(db, "tournaments"),
     where("game", "==", gameId),
-    where("status", "==", "live"),
-    orderBy("startAt", "asc")
+    where("status", "==", "live")
   );
   const snap = await getDocs(q);
   selectEl.innerHTML = '<option value="">— Select a tournament —</option>';
@@ -57,31 +58,58 @@ export async function loadTournamentOptions(gameId, selectEl, listEl) {
     return {};
   }
 
+  const docs = [];
+  snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+  docs.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+
   const map = {};
   let listHtml = "";
-  snap.forEach(d => {
-    const t = d.data();
-    map[d.id] = t;
+  docs.forEach(t => {
+    map[t.id] = t;
     const opt = document.createElement("option");
-    opt.value = d.id;
+    opt.value = t.id;
     opt.textContent = `${t.title} (${t.format || gameId}) — ${t.entryType === "paid" ? "Paid, code required" : "Free entry"}`;
     selectEl.appendChild(opt);
 
+    const shareText = encodeURIComponent(`${t.title} — register now on Terminators Global Esports! ${window.location.href}`);
+
     listHtml += `
       <div class="tourney-card">
-        <span class="tourney-badge ${t.entryType === "paid" ? "paid" : "free"}">${t.entryType === "paid" ? "PAID" : "FREE"}</span>
+        <span class="tourney-badge live-pulse">LIVE</span>
         <div>
           <h3 style="margin:0 0 4px;font-size:1.05rem;">${t.title}</h3>
           <div class="tourney-meta">
+            <span class="tourney-badge ${t.entryType === "paid" ? "paid" : "free"}" style="margin-right:4px;">${t.entryType === "paid" ? "PAID" : "FREE"}</span>
             <span>${t.format || ""}</span>
             <span>Prize: ${t.prizePool || "TBA"}</span>
             <span>Slots: ${t.slotsFilled ?? 0}/${t.slots ?? "—"}</span>
+            ${t.startAt ? `<span class="countdown-chip" data-start="${t.startAt}"></span>` : ""}
           </div>
         </div>
-        <span></span>
+        <a class="share-btn" href="https://wa.me/?text=${shareText}" target="_blank" rel="noopener">Share</a>
       </div>`;
   });
   if (listEl) listEl.innerHTML = listHtml;
+
+  // Live countdown ticking for any tournament with a start time set
+  const countdownEls = listEl ? listEl.querySelectorAll(".countdown-chip") : [];
+  if (countdownEls.length) {
+    const tick = () => {
+      countdownEls.forEach(el => {
+        const target = new Date(el.dataset.start).getTime();
+        const diff = target - Date.now();
+        if (isNaN(target)) { el.textContent = ""; return; }
+        if (diff <= 0) { el.textContent = "STARTING NOW"; return; }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        el.textContent = `STARTS IN ${h}h ${m}m ${s}s`;
+      });
+    };
+    tick();
+    setInterval(tick, 1000);
+  }
+
   return map;
 }
 
