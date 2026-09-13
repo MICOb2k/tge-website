@@ -167,12 +167,65 @@ a { color: var(--tge-blaze); text-decoration: none; }
 .btn-block { width: 100%; justify-content: center; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* ---------- Hero ---------- */
+/* ---------- Hero (animated glowing background) ---------- */
 .hero {
   padding: 90px 0 70px;
   position: relative;
   border-bottom: 1px solid var(--tge-olive);
+  overflow: hidden;
 }
+
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.28;
+  pointer-events: none;
+  z-index: 0;
+}
+.hero::before {
+  background: var(--tge-blaze);
+  top: -220px;
+  left: -120px;
+  animation: drift-glow-a 14s ease-in-out infinite;
+}
+.hero::after {
+  background: var(--tge-live);
+  bottom: -260px;
+  right: -140px;
+  opacity: 0.16;
+  animation: drift-glow-b 18s ease-in-out infinite;
+}
+
+@keyframes drift-glow-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(60px, 40px) scale(1.15); }
+}
+@keyframes drift-glow-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-50px, -30px) scale(1.2); }
+}
+
+/* Scanline sweep across the hero, tactical HUD feel */
+.hero-scan {
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,77,28,0.06), transparent);
+  animation: scan-sweep 6s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes scan-sweep {
+  0% { left: -60%; }
+  100% { left: 120%; }
+}
+
+.hero .container { position: relative; z-index: 1; }
 
 .hero-tag {
   font-family: var(--f-mono);
@@ -190,7 +243,17 @@ a { color: var(--tge-blaze); text-decoration: none; }
   background: var(--tge-live);
   border-radius: 50%;
   box-shadow: 0 0 8px var(--tge-live);
+  animation: pulse-dot 1.6s ease-in-out infinite;
 }
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 4px var(--tge-live); opacity: 1; }
+  50% { box-shadow: 0 0 16px 4px var(--tge-live); opacity: 0.75; }
+}
+
+/* Clickable hero stats */
+.stat-link { cursor: pointer; display: block; transition: transform 0.15s ease; }
+.stat-link:hover { transform: translateY(-2px); }
+.stat-link:hover .stat-num { color: var(--tge-blaze); text-shadow: 0 0 14px rgba(255,77,28,0.5); }
 
 .hero h1 { max-width: 14ch; }
 .hero p { font-size: 1.08rem; margin-top: 18px; max-width: 52ch; }
@@ -247,10 +310,14 @@ a { color: var(--tge-blaze); text-decoration: none; }
   background: var(--tge-panel);
   padding: 26px 22px;
   position: relative;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, box-shadow 0.25s ease, transform 0.15s ease;
   display: block;
 }
-.game-card:hover { background: var(--tge-panel-2); }
+.game-card:hover {
+  background: var(--tge-panel-2);
+  box-shadow: inset 0 0 0 1px var(--tge-blaze), 0 0 24px rgba(255,77,28,0.18);
+  transform: translateY(-2px);
+}
 
 .game-card .game-index {
   font-family: var(--f-mono);
@@ -293,6 +360,39 @@ a { color: var(--tge-blaze); text-decoration: none; }
 }
 .tourney-badge.free { border-color: var(--tge-live); color: var(--tge-live); }
 .tourney-badge.paid { border-color: var(--tge-blaze); color: var(--tge-blaze); }
+.tourney-badge.live-pulse {
+  border-color: var(--tge-live); color: var(--tge-live);
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+.countdown-chip {
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  color: var(--tge-blaze);
+}
+
+.share-btn {
+  background: transparent;
+  border: 1px solid var(--tge-field);
+  color: var(--tge-bone-dim);
+  padding: 6px 12px;
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+.share-btn:hover { border-color: var(--tge-live); color: var(--tge-live); }
+
+.copy-btn {
+  background: transparent;
+  border: none;
+  color: var(--tge-field);
+  cursor: pointer;
+  font-size: 0.7rem;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.copy-btn:hover { color: var(--tge-blaze); }
 
 .tourney-meta {
   display: flex;
@@ -377,6 +477,58 @@ a { color: var(--tge-blaze); text-decoration: none; }
 .form-msg.error { background: rgba(255,77,28,0.1); border: 1px solid var(--tge-blaze); color: var(--tge-blaze); }
 .form-msg.success { background: rgba(123,174,74,0.1); border: 1px solid var(--tge-live); color: var(--tge-live); }
 
+/* ---------- Social icons (Connect page) ---------- */
+.social-icon {
+  width: 26px; height: 26px;
+  fill: var(--tge-bone-dim);
+  margin-bottom: 10px;
+  transition: fill 0.15s ease;
+}
+.social-card:hover .social-icon { fill: var(--tge-blaze); }
+
+/* ---------- Hall of Fame champion glow ---------- */
+.hof-card {
+  transition: box-shadow 0.3s ease;
+}
+.hof-card:hover {
+  box-shadow: inset 0 0 0 1px #E8C547, 0 0 22px rgba(232,197,71,0.22);
+}
+.hof-card img { animation: champion-glow 3s ease-in-out infinite; }
+@keyframes champion-glow {
+  0%, 100% { box-shadow: 0 0 0 rgba(232,197,71,0); }
+  50% { box-shadow: 0 0 12px rgba(232,197,71,0.5); }
+}
+
+/* ---------- Install App button ---------- */
+.install-btn {
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+.install-btn.show { display: inline-flex; }
+
+/* ---------- Founder credit ---------- */
+.founder-credit {
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  color: var(--tge-field);
+  letter-spacing: 0.15em;
+  margin-top: 6px;
+}
+
+/* ---------- Skeleton loading shimmer ---------- */
+.skeleton {
+  background: linear-gradient(90deg, var(--tge-panel) 25%, var(--tge-panel-2) 50%, var(--tge-panel) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  height: 18px;
+  border-radius: var(--radius);
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* ---------- Footer ---------- */
 .site-footer {
   border-top: 1px solid var(--tge-olive);
@@ -406,8 +558,22 @@ a { color: var(--tge-blaze); text-decoration: none; }
 }
 
 @media (max-width: 720px) {
-  .nav-links { display: none; }
+  /* FIXED: nav links were completely hidden on mobile before — now a
+     horizontally scrollable row so Games/Admin/etc. stay reachable. */
+  .site-header .container { height: auto; flex-direction: column; align-items: flex-start; padding-top: 12px; padding-bottom: 10px; gap: 8px; }
+  .nav-links {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    gap: 18px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-links a { white-space: nowrap; font-size: 0.85rem; }
+
   .tourney-card { grid-template-columns: 1fr; }
   .field-row { grid-template-columns: 1fr; }
   .hero-stats { grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    }
+  .hero::before, .hero::after { width: 280px; height: 280px; filter: blur(60px); }
+   }
