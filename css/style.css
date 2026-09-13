@@ -576,4 +576,4 @@ a { color: var(--tge-blaze); text-decoration: none; }
   .field-row { grid-template-columns: 1fr; }
   .hero-stats { grid-template-columns: repeat(3, 1fr); gap: 20px; }
   .hero::before, .hero::after { width: 280px; height: 280px; filter: blur(60px); }
-   }
+     }
