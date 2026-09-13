@@ -77,6 +77,11 @@
         <label>Rules / Notes</label>
         <input type="text" name="rules" placeholder="Short summary of rules">
       </div>
+      <div class="field">
+        <label>Start Date & Time <span style="color:var(--tge-field)">(optional — shows a live countdown)</span></label>
+        <input type="text" name="startAt" placeholder="e.g. 2026-09-15T18:00">
+        <div class="hint">Format: YYYY-MM-DDTHH:MM (24hr). Leave blank to skip the countdown.</div>
+      </div>
       <button type="submit" class="btn btn-primary btn-block">Publish Tournament</button>
       <div class="form-msg" id="publish-msg"></div>
     </form>
@@ -105,6 +110,10 @@
       <div class="field-row">
         <div class="field"><label>Twitter / X URL</label><input type="text" name="twitter"></div>
         <div class="field"><label>Instagram URL</label><input type="text" name="instagram"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>TikTok URL</label><input type="text" name="tiktok"></div>
+        <div class="field"></div>
       </div>
       <button type="submit" class="btn btn-outline">Save Links</button>
       <div class="form-msg" id="social-msg"></div>
@@ -199,8 +208,15 @@
     const codes = await listCodesForTournament(tournamentId);
     if (!codes.length) { el.innerHTML = ""; return; }
     el.innerHTML = "<div style='margin-top:10px;'>" + codes.map(c =>
-      `<span class="code-chip ${c.used ? "used" : ""}">${c.id}</span>`
+      `<span class="code-chip ${c.used ? "used" : ""}">${c.id}${c.used ? "" : ` <button class="copy-btn" data-code="${c.id}" title="Copy code">📋</button>`}</span>`
     ).join("") + "</div>";
+    el.querySelectorAll(".copy-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        navigator.clipboard.writeText(btn.dataset.code);
+        btn.textContent = "✓";
+        setTimeout(() => { btn.textContent = "📋"; }, 1200);
+      });
+    });
   }
 
   renderLiveList();
