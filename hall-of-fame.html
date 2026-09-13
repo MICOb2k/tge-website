@@ -76,10 +76,13 @@
 
   async function load() {
     const listEl = document.getElementById("hof-list");
-    const q = query(collection(db, "tournaments"), where("status", "==", "ended"), orderBy("endedAt", "desc"));
+    // No orderBy — where()+orderBy() on a different field needs a
+    // Firestore composite index. Sort client-side instead.
+    const q = query(collection(db, "tournaments"), where("status", "==", "ended"));
     const snap = await getDocs(q);
     allWinners = [];
     snap.forEach(d => allWinners.push({ id: d.id, ...d.data() }));
+    allWinners.sort((a, b) => (b.endedAt?.toMillis?.() || 0) - (a.endedAt?.toMillis?.() || 0));
     render("");
   }
 
